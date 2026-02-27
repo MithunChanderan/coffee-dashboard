@@ -1,14 +1,19 @@
 import streamlit as st
-import pickle
 
-st.title("Revenue Prediction Engine")
+from components.modeling import render_prediction
+from components.ui import hero, load_theme
 
-model = pickle.load(open("models/revenue_model.pkl","rb"))
 
-hour = st.slider("Hour",0,23)
-qty = st.number_input("Quantity",1,20)
-price = st.number_input("Unit Price",1.0,20.0)
+st.set_page_config(page_title="Prediction Engine", page_icon=":chart_with_upwards_trend:", layout="wide")
+load_theme()
 
-if st.button("Predict Revenue"):
-    prediction = model.predict([[hour,qty,price]])
-    st.success(f"Predicted Revenue: ${prediction[0]:.2f}")
+df = st.session_state.get("df")
+numeric_cols = st.session_state.get("numeric_cols", [])
+categorical_cols = st.session_state.get("categorical_cols", [])
+
+if df is None or df.empty:
+    st.error("No dataset loaded. Go to Home and upload or use the demo.")
+    st.stop()
+
+hero("Prediction Engine", "Auto-selects regression or classification based on your target.")
+render_prediction(df, numeric_cols, categorical_cols)
