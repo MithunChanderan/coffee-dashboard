@@ -1,9 +1,12 @@
 import pandas as pd
 import streamlit as st
-from components.data_loader import load_data
-from components.kpi_cards import show_kpis
-from components.charts import revenue_trend, heatmap_sales, category_breakdown
+from pathlib import Path
 
+from components.data_loader import load_uploaded_or_demo, infer_column_types
+from components.kpi_cards import render_kpis
+from components.viz import render_overview_charts
+from components.modeling import render_clustering, render_prediction
+from components.ui import load_theme, hero_section, lottie_block, typed_badges
 
 st.set_page_config(
     page_title="Coffee Analytics Pro",
@@ -12,78 +15,37 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+load_theme()
 
-def load_css():
-    with open("assets/style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+uploaded_file = st.sidebar.file_uploader("Upload CSV dataset", type=["csv"])
+df, data_note = load_uploaded_or_demo(uploaded_file)
+df, numeric_cols, categorical_cols, datetime_cols = infer_column_types(df)
 
-
-load_css()
-
-# ---------- Sidebar ----------
-st.sidebar.title("☕ Coffee Analytics Pro")
-st.sidebar.markdown(
-    "Enterprise-grade analytics, ML insights, and a built-in Python lab."
-)
-
-uploaded_file = st.sidebar.file_uploader(
-    "Upload Dataset (CSV)",
-    type=["csv"],
-)
-
-# ---------- Data Handling ----------
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.sidebar.success("Dataset uploaded successfully.")
-else:
-    try:
-        df = load_data()
-        if df.empty:
-            st.sidebar.warning("Local dataset is empty.")
-            st.stop()
-    except Exception:
-        st.sidebar.warning("No dataset found. Please upload one.")
-        st.stop()
-
-# Store globally for pages
 st.session_state["df"] = df
+st.session_state["numeric_cols"] = numeric_cols
+st.session_state["categorical_cols"] = categorical_cols
+st.session_state["datetime_cols"] = datetime_cols
 
-# ---------- Main Page ----------
-st.sidebar.success("Select a page from the sidebar.")
+with st.sidebar:
+    st.markdown(f"**Dataset source:** {data_note}")
+    typed_badges(numeric_cols, categorical_cols, datetime_cols)
 
-st.markdown(
-    """
-<div class="hero">
-    <div class="pill">Live data • ML ready • Interactive IDE</div>
-    <h1>Coffee Sales Control Center</h1>
-    <p>Performance overview, predictive models, and a sandbox to prototype analyses without leaving the dashboard.</p>
-    <div class="cta-row">
-        <span class="cta">Explore → Executive Overview</span>
-        <span class="cta ghost">Build → Interactive Lab</span>
-    </div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
+hero_section()
 
-st.markdown("#### Executive Snapshot")
-show_kpis(df)
+with st.container():
+    render_kpis(df, numeric_cols)
+    render_overview_charts(df, numeric_cols, categorical_cols)
 
-tab1, tab2, tab3 = st.tabs(
-    ["Revenue trend", "Sales heatmap", "Category mix"]
-)
+st.markdown("### Interactive Lab")
+lottie_block("https://assets6.lottiefiles.com/packages/lf20_bhw1ul4g.json", height=120)
+st.page_link("pages/2_Interactive_Lab.py", label="Open Interactive Lab →", icon="🧪")
 
-with tab1:
-    revenue_trend(df)
-with tab2:
-    heatmap_sales(df)
-with tab3:
-    category_breakdown(df)
+st.markdown("### ML Playground")
+col1, col2 = st.columns(2)
+with col1:
+    render_clustering(df, numeric_cols)
+with col2:
+    render_prediction(df, numeric_cols, categorical_cols)
 
-st.markdown("#### Dataset Preview")
-st.dataframe(df.head(), use_container_width=True)
-
-st.markdown(
-    f"Rows: **{df.shape[0]:,}** • Columns: **{df.shape[1]}** • Time range: "
-    f"{df['transaction_date'].min()} → {df['transaction_date'].max()}"
-)
+st.markdown("### Dataset Preview")
+st.dataframe(df.head(50), use_container_width=True)

@@ -1,34 +1,17 @@
 import streamlit as st
-import pickle
-import plotly.express as px
-from components.data_loader import load_data
-from components.filters import apply_filters
+from components.modeling import render_clustering, render_prediction
 
-st.title("ML Insights")
-
+st.set_page_config(page_title="ML Insights", page_icon="🤖", layout="wide")
 df = st.session_state.get("df")
+num = st.session_state.get("numeric_cols", [])
+cat = st.session_state.get("categorical_cols", [])
 
 if df is None:
     st.error("No dataset loaded.")
     st.stop()
 
-filtered_df = apply_filters(df)
-
-cluster_model = pickle.load(open("models/cluster_model.pkl","rb"))
-classifier = pickle.load(open("models/classifier.pkl","rb"))
-
-features = filtered_df[["transaction_qty","unit_price","Hour","Revenue"]]
-filtered_df["Cluster"] = cluster_model.predict(features)
-
-fig = px.scatter(
-    filtered_df,
-    x="Hour",
-    y="Revenue",
-    color="Cluster",
-    title="Customer Purchase Clusters"
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-st.subheader("Classification Model Accuracy")
-st.write("Model trained to classify High vs Low Sales transactions.")
+col1, col2 = st.columns(2)
+with col1:
+    render_clustering(df, num)
+with col2:
+    render_prediction(df, num, cat)

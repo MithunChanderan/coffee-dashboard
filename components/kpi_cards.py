@@ -1,12 +1,27 @@
+import pandas as pd
 import streamlit as st
 
-def show_kpis(df):
-    total_revenue = df["Revenue"].sum()
-    total_transactions = df.shape[0]
-    avg_order = df["Revenue"].mean()
+def render_kpis(df: pd.DataFrame, numeric_cols):
+    total_rows = len(df)
+    total_cols = df.shape[1]
+    missing = int(df.isna().sum().sum())
+    avg_numeric = df[numeric_cols].mean().mean() if numeric_cols else 0
 
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Total Revenue", f"${total_revenue:,.2f}")
-    col2.metric("Transactions", total_transactions)
-    col3.metric("Avg Order Value", f"${avg_order:.2f}")
+    st.markdown('<div class="card-grid">', unsafe_allow_html=True)
+    for label, value, suffix in [
+        ("Rows", f"{total_rows:,}", ""),
+        ("Columns", total_cols, ""),
+        ("Missing values", f"{missing:,}", ""),
+        ("Avg numeric value", f"{avg_numeric:,.2f}", ""),
+    ]:
+        st.markdown(
+            f"""
+            <div class="glass-card kpi-card">
+                <div class="kpi-label">{label}</div>
+                <div class="kpi-value">{value}{suffix}</div>
+                <div class="pulse"></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
