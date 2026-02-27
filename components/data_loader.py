@@ -15,20 +15,17 @@ def _read_csv(file):
 
 
 def load_dataset(uploaded_file):
-    """Return dataframe and source note. Falls back to bundled demo when no upload."""
+    """Return dataframe, source note, and status. UI messaging is handled by caller."""
     try:
         if uploaded_file is not None:
             df = _read_csv(uploaded_file)
-            return df, f"Uploaded file: {uploaded_file.name}"
+            return df, f"Uploaded file: {uploaded_file.name}", "uploaded"
         if DEMO_PATH.exists():
             df = _read_csv(DEMO_PATH)
-            st.info("Demo dataset loaded. Upload your own CSV to explore.")
-            return df, "Demo dataset"
-        st.warning("No dataset available. Please upload a CSV.")
-        return pd.DataFrame(), "Missing dataset"
+            return df, "Demo dataset", "demo"
+        return pd.DataFrame(), "No dataset available", "missing"
     except Exception as e:
-        st.error(f"Failed to load dataset: {e}")
-        return pd.DataFrame(), "Load error"
+        return pd.DataFrame(), f"Load error: {e}", "error"
 
 
 def detect_column_types(df: pd.DataFrame):

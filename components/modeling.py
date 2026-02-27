@@ -66,7 +66,7 @@ def render_clustering(df: pd.DataFrame, numeric_cols):
         y=feature_cols[1],
         color="cluster",
         title="Cluster scatter (first two features)",
-        color_continuous_scale="copper",
+        color_continuous_scale="inferno",
     )
     st.plotly_chart(fig2, use_container_width=True)
     st.caption(f"Computed on {len(X_plot)} rows (rows with NA removed).")

@@ -12,7 +12,6 @@ numeric_cols = st.session_state.get("numeric_cols", [])
 categorical_cols = st.session_state.get("categorical_cols", [])
 
 if df is None or df.empty:
-    st.error("No dataset loaded. Go to Home and upload or use the demo.")
     st.stop()
 
 hero("Prediction Engine", "Auto-selects regression or classification based on your target.")
